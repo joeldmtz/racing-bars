@@ -93,6 +93,25 @@ function fillDateGaps(
 
 function calculateLastValues(makeCumulative = false) {
   return function (data: Data[]) {
+    if (makeCumulative) {
+      const nameSet = new Set<string>();
+      const dateSet = new Set<string>(data.map((d) => d.date));
+
+
+      const fullData = [...dateSet.keys()]
+        .flatMap(date => {
+          const dateData = data.filter(d => d.date === date);
+          dateData.forEach(d => nameSet.add(d.name));
+
+          return [...nameSet.keys()].map(name => {
+            const item = dateData.find(d => d.name === name);
+            return item ?? { date, name, value: 0 };
+          });
+        });
+
+        data = fullData
+    }
+
     return data
       .sort((a, b) => a.name.localeCompare(b.name) || a.date.localeCompare(b.date))
       .reduce((acc: Data[], curr) => {
