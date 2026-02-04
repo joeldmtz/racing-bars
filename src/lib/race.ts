@@ -180,7 +180,7 @@ export async function race(
       ];
       let dataOptionsChanged = false;
       dataOptions.forEach((key) => {
-        if (newValidOptions[key] && newValidOptions[key] !== store.getState().options[key]) {
+        if (newValidOptions[key] !== null && newValidOptions[key] !== store.getState().options[key]) {
           dataOptionsChanged = true;
         }
       });
