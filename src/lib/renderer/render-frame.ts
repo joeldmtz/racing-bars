@@ -149,7 +149,7 @@ export function renderFrame(data: Data[], store: Store, renderOptions: RenderOpt
     .selectAll('.valueLabel')
     .data(dateSlice, (d: Data) => d.name);
 
-  valueLabels
+  const valueLabelsEnter = valueLabels
     .enter()
     .append('text')
     .attr('class', 'valueLabel')
@@ -157,8 +157,8 @@ export function renderFrame(data: Data[], store: Store, renderOptions: RenderOpt
     .attr('y', () => y(topN + 1) + marginBottom + 5)
     .text((d: Data) =>
       valueDecimals === 'preserve'
-        ? d.lastValue
-        : d3.format(`,.${countDecimals(d.lastValue ?? d.value)}f`)(d.lastValue as number),
+        ? d.value
+        : d3.format(`,.${countDecimals(d.value)}f`)(d.value as number),
     )
     .transition()
     .duration(tickDuration)
@@ -167,6 +167,7 @@ export function renderFrame(data: Data[], store: Store, renderOptions: RenderOpt
 
   const sameDate = lastDate === currentDate;
   valueLabels
+    .merge(valueLabelsEnter as any)
     .transition()
     .duration(tickDuration)
     .ease(d3.easeLinear)
