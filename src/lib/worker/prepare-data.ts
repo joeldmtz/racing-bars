@@ -94,22 +94,48 @@ function fillDateGaps(
 function calculateLastValues(makeCumulative = false) {
   return function (data: Data[]) {
     if (makeCumulative) {
+      const dates: string[] = [];
+      const byDate = new Map<string, Data[]>();
       const nameSet = new Set<string>();
-      const dateSet = new Set<string>(data.map((d) => d.date));
 
+      data.forEach((row) => {
+        nameSet.add(row.name);
+        if (!byDate.has(row.date)) {
+          byDate.set(row.date, []);
+          dates.push(row.date);
+        }
+        byDate.get(row.date)?.push(row);
+      });
 
-      const fullData = [...dateSet.keys()]
-        .flatMap(date => {
-          const dateData = data.filter(d => d.date === date);
-          dateData.forEach(d => nameSet.add(d.name));
+      const names = Array.from(nameSet.values());
+      const runningTotals = new Map<string, number>();
+      const lastSeen = new Map<string, Data>();
+      const fullData: Data[] = [];
 
-          return [...nameSet.keys()].map(name => {
-            const item = dateData.find(d => d.name === name);
-            return item ?? { date, name, value: 0 };
-          });
+      dates.forEach((date) => {
+        const dateRows = byDate.get(date) ?? [];
+        const present = new Set<string>();
+
+        dateRows.forEach((row) => {
+          const prev = runningTotals.get(row.name) ?? 0;
+          const next = prev + row.value;
+          runningTotals.set(row.name, next);
+          present.add(row.name);
+
+          const updated = { ...row, value: next, lastValue: prev };
+          fullData.push(updated);
+          lastSeen.set(row.name, updated);
         });
 
-        data = fullData
+        names.forEach((name) => {
+          if (present.has(name)) return;
+          const prev = runningTotals.get(name) ?? 0;
+          const base = lastSeen.get(name) ?? { name };
+          fullData.push({ ...base, date, name, value: prev, lastValue: prev });
+        });
+      });
+
+      return fullData;
     }
 
     return data
